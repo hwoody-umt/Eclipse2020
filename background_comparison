@@ -1,0 +1,229 @@
+import xarray as xr
+import netCDF4
+import matplotlib.pyplot as plt
+import numpy as np
+from mpl_toolkits.mplot3d import Axes3D
+import pandas as pd
+from scipy import interpolate
+from scipy.interpolate import interp1d
+from matplotlib.pyplot import cm
+
+########################################################
+###                                                  ###
+###                   USER INPUTS                    ###
+###                                                  ###
+########################################################
+
+merrafile = 'T26backwards.v'
+sondefile = 'Vwnd_Tolten_new.txt'
+##WRF file will read in automatically based on time and unit
+time = "z42" #(z18,z30,z42,z54)
+
+#xaxis_title = "Uwnd [m/s]"
+xaxis_title = "Vwnd [m/s]"
+#xaxis_title = "Temperature [K]"
+
+
+########################################################
+###                                                  ###
+###                 READ MERRA FILE                  ###
+###                                                  ###
+########################################################
+
+with open(merrafile) as f:
+	lines = f.read()
+	
+pines=lines.split()
+pines=np.array(pines).astype("float32")
+
+beforeafterpine=np.array_split(pines, [2139858])  
+
+alts = np.arange(1,38)
+
+
+if time == 'z18':
+	ba = beforeafterpine[0]
+	timesplit = np.array_split(ba, [356643,356643*2,356643*3,356643*4,356643*5,356643*6])
+	i = timesplit[3]
+if time == 'z30':
+	ba = beforeafterpine[0]
+	timesplit = np.array_split(ba, [356643,356643*2,356643*3,356643*4,356643*5,356643*6])
+	i = timesplit[5]
+
+if time == 'z42':
+	ba = beforeafterpine[1]
+	timesplit = np.array_split(ba, [356643,356643*2,356643*3,356643*4,356643*5,356643*6,356643*7,356643*8,356643*9,356643*10])
+	i = timesplit[1]
+if time == 'z54':
+	ba = beforeafterpine[1]
+	timesplit = np.array_split(ba, [356643,356643*2,356643*3,356643*4,356643*5,356643*6,356643*7,356643*8,356643*9,356643*10])
+	i = timesplit[3]
+
+
+altsplit = np.array_split(i, [9639*1, 9639*2, 9639*3,9639*4,9639*5,9639*6,9639*7,9639*8,9639*9,9639*10,9639*11,9639*12,9639*13,9639*14,9639*15,9639*16,9639*17,9639*18,9639*19, 9639*20,9639*21,9639*22,9639*23,9639*24,9639*25,9639*26,9639*27,9639*28,9639*29,9639*30,9639*31,9639*32,9639*33,9639*34,9639*35, 9639*36,9639*37])
+
+balt1u = altsplit[0][2478] 
+balt2u = altsplit[1][2478]
+balt3u = altsplit[2][2478]
+balt4u = altsplit[3][2478]
+balt5u = altsplit[4][2478]
+balt6u = altsplit[5][2478]
+balt7u = altsplit[6][2478]
+balt8u = altsplit[7][2478]
+balt9u = altsplit[8][2478]
+balt10u = altsplit[9][2478]
+balt11u = altsplit[10][2478]
+balt12u = altsplit[11][2478]
+balt13u = altsplit[12][2478]
+balt14u = altsplit[13][2478]
+balt15u = altsplit[14][2478]
+balt16u = altsplit[15][2478]
+balt17u = altsplit[16][2478]
+balt18u = altsplit[17][2478]
+balt19u = altsplit[18][2478]
+balt20u = altsplit[19][2478]
+balt21u = altsplit[20][2478]
+balt22u = altsplit[21][2478]
+balt23u = altsplit[22][2478]
+balt24u = altsplit[23][2478]
+balt25u = altsplit[24][2478]
+balt26u = altsplit[25][2478]
+balt27u = altsplit[26][2478]
+balt28u = altsplit[27][2478]
+balt29u = altsplit[28][2478]
+balt30u = altsplit[29][2478]
+balt31u = altsplit[30][2478]
+balt32u = altsplit[31][2478]
+balt33u = altsplit[32][2478]
+balt34u = altsplit[33][2478]
+balt35u = altsplit[34][2478]
+balt36u = altsplit[35][2478]
+balt37u = altsplit[36][2478]
+
+altitudes = np.array([1.2197, 1.4567, 1.699, 1.9482, 2.2033,  2.4652, 2.7343, 3.0109, 3.5892, 4.2047, 4.8632, 5.5721, 6.341, 7.1824, 8.1138, 9.1601, 10.3585, 11.7699, 13.50, 15.7905, 17.6617, 19.3142, 20.3533, 21.6293, 23.3132, 25.9075, 27.1148, 28.1811, 28.8515, 29.6749, 30.7614, 32.4353, 33.2143, 33.9023, 34.3349, 34.8661, 36.6472])
+
+balist=np.array([balt1u, balt2u, balt3u, balt4u, balt5u, balt6u, balt7u, balt8u, balt9u, balt10u, balt11u, balt12u, balt13u, balt14u, balt15u, balt16u, balt17u, balt18u, balt19u, balt20u, balt21u, balt22u, balt23u, balt24u, balt25u, balt26u, balt27u, balt28u, balt29u, balt30u, balt31u, balt32u, balt33u, balt34u, balt35u, balt36u, balt37u])
+
+
+plt.plot(balist, altitudes, linestyle='dotted', color='slateblue', linewidth=3, label="MERRA2")
+
+f.close()
+
+
+########################################################
+###                                                  ###
+###                  READ WRF FILE                   ###
+###                                                  ###
+########################################################
+fnamez18 = 'wrfout_d01_2020-12-13_18_00_00.nc' 
+ds4 = netCDF4.Dataset(fnamez18,'r')
+store4 = xr.backends.NetCDF4DataStore(ds4)
+DS4 = xr.open_dataset(store4)
+Xcomp4= DS4['U']
+Ycomp4= DS4['V']
+hi1 = DS4['PH']
+hi2 = DS4['PHB']
+geo=((hi1+hi2)/9.81)/1000
+geofinal = np.array(geo[0,1:,93,162])  
+
+fnamez30 = 'wrfout_d01_2020-12-14_06_00_00.nc' 
+ds6 = netCDF4.Dataset(fnamez30,'r')
+store6 = xr.backends.NetCDF4DataStore(ds6)
+DS6 = xr.open_dataset(store6)
+Xcomp6= DS6['U']
+Ycomp6= DS6['V']
+
+Yaxis = geofinal
+
+Xcomp4_3D = np.array(Xcomp4[0,:,93,162])
+Xcomp6_3D = np.array(Xcomp6[0,:,93,162])
+
+Ycomp4_3D = np.array(Ycomp4[0,:,93,162])
+Ycomp6_3D = np.array(Ycomp6[0,:,93,162])
+
+
+fnamez42 = 'wrfout_d01_2020-12-14_18_00_00.nc' 
+ds2a = netCDF4.Dataset(fnamez42,'r')
+store2a = xr.backends.NetCDF4DataStore(ds2a)
+DS2a = xr.open_dataset(store2a)
+
+Xcomp2a= DS2a['U']
+Ycomp2a= DS2a['V']
+
+
+fnamez54 = 'wrfout_d01_2020-12-15_06_00_00.nc' 
+ds4a = netCDF4.Dataset(fnamez54,'r')
+store4a = xr.backends.NetCDF4DataStore(ds4a)
+DS4a = xr.open_dataset(store4a)
+
+Xcomp4a= DS4a['U']
+Ycomp4a= DS4a['V']
+
+Xcomp2a_3D = np.array(Xcomp2a[0,:,93,162])
+Xcomp4a_3D = np.array(Xcomp4a[0,:,93,162])
+Ycomp2a_3D = np.array(Ycomp2a[0,:,93,162])
+Ycomp4a_3D = np.array(Ycomp4a[0,:,93,162])
+
+if time == 'z18' and xaxis_title == "Uwnd [m/s]":
+	plottable = Xcomp4_3D
+if time == 'z18' and xaxis_title == "Vwnd [m/s]":
+	plottable = Ycomp4_3D
+if time == 'z30' and xaxis_title == "Uwnd [m/s]":
+	plottable = Xcomp6_3D
+if time == 'z30' and xaxis_title == "Vwnd [m/s]":
+	plottable = Ycomp6_3D
+if time == 'z42' and xaxis_title == "Uwnd [m/s]":
+	plottable = Xcomp2a_3D
+if time == 'z42' and xaxis_title == "Vwnd [m/s]":
+	plottable = Ycomp2a_3D
+if time == 'z54' and xaxis_title == "Uwnd [m/s]":
+	plottable = Xcomp4a_3D
+if time == 'z54' and xaxis_title == "Vwnd [m/s]":
+	plottable = Ycomp4a_3D
+
+plt.plot(plottable, Yaxis ,linestyle='dashed', color="mediumorchid", linewidth=3, label="WRF")
+
+
+####################################################################################################
+fille = open(sondefile, 'r') 
+data = fille.read()
+
+data = data.split()
+
+altitude = np.array(data[50:len(data):50]).astype("float64")
+
+
+z18 = np.array(data[53:len(data):50]).astype("float64")# + 273.15
+
+z30 = np.array(data[65:len(data):50]).astype("float64")# + 273.15
+
+z42 = np.array(data[76:len(data):50]).astype("float64")# + 273.15
+
+z54= np.array(data[88:len(data):50]).astype("float64")# + 273.15
+
+
+if time == 'z18':
+	time = z18
+	title = "1800 UTC 13 December 2020"
+if time == 'z30':
+	time = z30
+	title = "0600 UTC 14 December 2020"
+if time == 'z42':
+	time = z30
+	title = "1800 UTC 14 December 2020"
+if time == 'z54':
+	time = z54
+	title = "0600 UTC 15 December 2020"
+
+
+plt.plot(time,altitude, color='black', linewidth=2, label="Sonde")
+
+plt.xticks(fontsize=15)
+plt.yticks(fontsize=15)
+plt.xlabel(xaxis_title,fontsize=15)
+plt.ylabel("Altitude [km]",fontsize=15)
+plt.title(title,fontsize=20)
+plt.legend(fontsize=15)	
+plt.xlim(-30,60)
+plt.ylim(0,30)
+plt.show()
